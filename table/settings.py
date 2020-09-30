@@ -59,6 +59,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
 
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -162,16 +163,31 @@ MATERIAL_ADMIN_SITE = {
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
+# STATIC_URL = '/static/'
+
+# STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+
+# MEDIA_URL = '/media/'
+
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'static/media')
+
+# STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
+
+# import dj_database_url
+# prod_db = dj_database_url.config(conn_max_age=500)
+# DATABASES['default'].update(prod_db)
 STATIC_URL = '/static/'
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, "static"),
+)
+
+STATIC_ROOT = os.path.join(BASE_DIR, "live-static", "static-root")
 
 
-MEDIA_URL = '/media/'
+#STATIC_ROOT = "/home/cfedeploy/webapps/cfehome_static_root/"
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'static/media')
+MEDIA_URL = "/media/"
 
-
-import dj_database_url
-prod_db = dj_database_url.config(conn_max_age=500)
-DATABASES['default'].update(prod_db)
+MEDIA_ROOT = os.path.join(BASE_DIR, "live-static", "media-root")
