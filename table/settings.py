@@ -170,12 +170,7 @@ MEDIA_URL = '/media/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'static/media')
 
-<<<<<<< HEAD
+
 import dj_database_url
 prod_db = dj_database_url.config(conn_max_age=500)
-=======
-
-import dj_database_url 
-prod_db  =  dj_database_url.config(conn_max_age=500)
->>>>>>> d754441a81fc02f128e2217586c2d929b3014db5
 DATABASES['default'].update(prod_db)
