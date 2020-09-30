@@ -10,7 +10,3 @@ psycopg2==2.8.6
 pytz==2020.1
 sqlparse==0.3.1
 whitenoise==5.2.0
-<<<<<<< HEAD
-=======
-
->>>>>>> d754441a81fc02f128e2217586c2d929b3014db5
