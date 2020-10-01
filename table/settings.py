@@ -177,7 +177,7 @@ MATERIAL_ADMIN_SITE = {
 # import dj_database_url
 # prod_db = dj_database_url.config(conn_max_age=500)
 # DATABASES['default'].update(prod_db)
-STATIC_URL = '/live-static/'
+STATIC_URL = '/static/'
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static"),
@@ -188,7 +188,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "live-static", "static-root")
 
 #STATIC_ROOT = "/home/cfedeploy/webapps/cfehome_static_root/"
 
-MEDIA_URL = "/live-static/static-root/media/"
+MEDIA_URL = "/static/media/"
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "live-static", "media-root")
 
