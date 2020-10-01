@@ -76,7 +76,7 @@ class CouponSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Coupon
-        fields = ['code', 'discount_type', 'discount_value', 'valid_from', 'valid_till', 'status']
+        fields = ['code', 'discount_type', 'discount_value', 'valid_from', 'valid_till', 'status','id']
 
 
 class OrderDetailsSerializer(serializers.ModelSerializer):
