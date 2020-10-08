@@ -1,12 +1,21 @@
 # django imports
 from django.db import models
 from django.core import validators
-
+from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth.models import User, AbstractBaseUser, BaseUserManager  # django auth user model
+from django.utils.translation import ugettext_lazy as _
+from django.conf import settings
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from rest_framework.authtoken.models import Token
 
 # python imports
 import os
 import datetime
 
+# thrid party app imports
+from phonenumber_field.modelfields import PhoneNumberField
 
 STATUS_FIELD_CHOICES = (
     ('Active', 'Active'),
@@ -41,6 +50,64 @@ ORDER_FIELD_CHOICES = (
 
 def image_upload_path(instance, filename):
     return os.path.join("images", filename)
+
+
+class MyAccountManager(BaseUserManager):
+    def create_user(self, email, username, password=None):
+        if not email:
+            raise ValueError("Users must have an email address")
+        if not username:
+            raise ValueError("Users must have an username")
+
+        user = self.model(
+            email=self.normalize_email(email),
+            username=username,
+        )
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, username, password):
+        user = self.create_user(
+            email=self.normalize_email(email),
+            password=password,
+            username=username,
+        )
+        user.is_admin = True
+        user.is_staff = True
+        user.is_supperuser = True
+        user.save(using=self._db)
+        return user
+
+
+class Account(AbstractBaseUser):
+    email = models.EmailField(verbose_name="User Email", max_length=60, unique=True)
+    username = models.CharField(verbose_name="User Name", max_length=30, unique=True)
+    date_joined = models.DateTimeField(verbose_name="Date Joined", auto_now_add=True)
+    last_login = models.DateTimeField(verbose_name="Last Login", auto_now=True)
+    is_admin = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    is_supperuser = models.BooleanField(default=False)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', ]
+    objects = MyAccountManager()
+
+    def __str__(self):
+        return self.username
+
+    def has_perm(self, perm, obj=None):
+        return self.is_admin
+
+    def has_module_perms(self, app_label):
+        return True
+
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_auth_token(sender, instance=None, created=False, **kwargs):
+    if created:
+        Token.objects.create(user=instance)
 
 
 class MenuCategories(models.Model):
@@ -148,6 +215,7 @@ class Orders(models.Model):
                                     help_text='Required. 50 characters or fewer. Letters, digits and @/./+/-/_ only.',
                                     validators=[validators.RegexValidator(r'^[\w .@+-_]+$', 'Enter a valid name. This value may contain only letters, numbers and @/./+/-/_ characters.', 'invalid')])
     table_number = models.ForeignKey(Tables, verbose_name="Table Number", related_name="orders", null=False, default='no table', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, verbose_name="User", related_name="orders", blank=True, on_delete=models.SET_NULL)
     date = models.DateField(verbose_name="Order Date", default=datetime.date.today)
     bill_amount = models.DecimalField(verbose_name="Total Bill Amount", decimal_places=2, max_digits=10, null=True, blank=True)
 
@@ -183,6 +251,8 @@ class Orders(models.Model):
                 self.discount_bill_amount = self.bill_amount - self.bill_amount * (self.coupon.discount_value / 100)
         except:
             self.bill_amount = get_grand_total(self.id)
+            self.discount = 0
+            self.discount_bill_amount = self.bill_amount - self.discount
 
         super(Orders, self).save(*args, **kwargs)
 
@@ -214,6 +284,22 @@ class OrderDetails(models.Model):
         super(OrderDetails, self).save(*args, **kwargs)
 
 
+class CustomerPayments(models.Model):
+    order = models.ForeignKey(Orders, verbose_name="Order Number", related_name="paymentdetails", null=False, on_delete=models.CASCADE)
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name="Customer", related_name="paymentdetails", null=False, on_delete=models.CASCADE)
+    bill = models.IntegerField(verbose_name="Bill Amount", validators=[MinValueValidator(0)])
+    payment_id = models.CharField(verbose_name="Payment Id", max_length=255)
+    payment_amount = models.IntegerField(verbose_name="Payment Amount")
+    payment_status = models.CharField(verbose_name="Payment Status", max_length=50)
+    payment_method = models.CharField(verbose_name="Payment Method", max_length=255)
+    status = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "customer_payment"
+        verbose_name = "Customer Payment"
+        verbose_name_plural = "Customer Payments"
+
+
 def get_grand_total(order_number):
     """ Employee/Customer can view the grand total of an order """
 
@@ -241,13 +327,3 @@ def get_table_status(table_number):
         booked_tables.append(d["numbr"])
 
     return booked_tables
-
-
-# class Coupon(models.Model):
-#     code = models.CharField(max_length=50, unique=True)
-#     valid_from = models.DateTimeField()
-#     valid_to = models.DateTimeField()
-#     discount = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
-#     active = models.BooleanField()
-#     def __str__(self):
-#         return self.code

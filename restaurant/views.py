@@ -1,16 +1,45 @@
 # django imports
 from django.shortcuts import render
+from django.views.generic.base import TemplateView
+from django.conf import settings
+
+from django.http.response import JsonResponse  # new
+from django.views.decorators.csrf import csrf_exempt  # new
 
 # app models import
-from restaurant.models import MenuCategories, MenuSubCategories, Items, Tables, Orders, OrderDetails, Coupon
+from restaurant.models import MenuCategories, MenuSubCategories, Items, Tables, Orders, OrderDetails, Coupon, CustomerPayments
 
 # app serializers import
-from restaurant.serializers import ItemsSerializer, MenuSubCategoriesSerializer, MenuCategoriesSerializer, TablesSerializer, OrdersSerializer, OrderDetailsSerializer, CouponSerializer
+from restaurant.serializers import ItemsSerializer, MenuSubCategoriesSerializer, MenuCategoriesSerializer, TablesSerializer, OrdersSerializer, OrderDetailsSerializer, CouponSerializer, CustomerPaymentsSerializer, RegistrationSerializer
 
 # drf imports
 from rest_framework import viewsets, filters, response, parsers, renderers, status
 from rest_framework import generics
 from rest_framework.response import Response
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
+
+@api_view(['POST', ])
+def registration_view(request):
+
+    if request.method == 'POST':
+        serializer = RegistrationSerializer(data=request.data)
+        data = {}
+        if serializer.is_valid():
+            account = serializer.save()
+            data['response'] = "successfully registered a new user."
+            data['email'] = account.email
+            data['username'] = account.username
+            token = Token.objects.get(user=account).key
+            data['token'] = token
+        else:
+            data = serializer.errors
+        return Response(data)
 
 
 class MenuCategoriesViewSet(viewsets.ModelViewSet):
@@ -153,3 +182,50 @@ class CouponViewSet(viewsets.ModelViewSet):
 #             res.data = {"message": "No data found"}
 
 #         return res
+
+
+class CustomerPaymentsViewSet(viewsets.ModelViewSet):
+    """
+    This viewset automatically provides `list`, `create`, `retrieve`,
+    `update` and `destroy` actions.
+    """
+
+    serializer_class = CustomerPaymentsSerializer
+
+    def get_queryset(self):
+
+        try:
+            return CustomerPayments.objects.all()
+        except Exception as err:
+            return {}
+
+
+class HomePageView(TemplateView):
+    template_name = 'home.html'
+
+    def get_context_data(self, **kwargs):  # new
+        context = super().get_context_data(**kwargs)
+        context['key'] = settings.STRIPE_PUBLISHABLE_KEY
+        return context
+
+
+def charge(request):  # new
+    if request.method == 'POST':
+        charge = stripe.Charge.create(
+            amount=100,
+            currency='usd',
+            description='A Django charge',
+            source=request.POST['stripeToken']
+        )
+        context = {
+            'order': Orders.objects.get(id=2),
+            'customer': Customers.objects.get(id=2),
+            'bill': 100,
+            'payment_id': charge['id'],
+            'payment_amount': charge['amount_captured'],
+            'payment_status': charge['status'],
+            'payment_method': charge['payment_method'],
+            'status': 1,
+        }
+        appointment = CustomerPayments.objects.create(**context)
+        return render(request, 'charge.html', context)

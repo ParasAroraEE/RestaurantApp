@@ -1,9 +1,36 @@
 # drf imports
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
 # app model import
-from restaurant.models import MenuCategories, MenuSubCategories, Items, Tables, Orders, OrderDetails, Coupon
+from restaurant.models import MenuCategories, MenuSubCategories, Items, Tables, Orders, OrderDetails, Coupon, CustomerPayments, Account
 
+from phonenumber_field.serializerfields import PhoneNumberField
+
+
+class RegistrationSerializer(serializers.ModelSerializer):
+    password2 = serializers.CharField(style={'input_type': 'password'}, write_only=True)
+
+    class Meta:
+        model = Account
+        fields = ['email', 'username', 'password', 'password2']
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
+
+    def save(self):
+        account = Account(
+            email=self.validated_data['email'],
+            username=self.validated_data['username'],
+        )
+        password = self.validated_data['password']
+        password2 = self.validated_data['password2']
+
+        if password != password2:
+            raise serializers.ValidationError({'password': 'Passwords must match'})
+        account.set_password(password)
+        account.save()
+        return account
 
 class ItemsSerializer(serializers.ModelSerializer):
 
@@ -76,7 +103,7 @@ class CouponSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Coupon
-        fields = ['code', 'discount_type', 'discount_value', 'valid_from', 'valid_till', 'status','id']
+        fields = ['code', 'discount_type', 'discount_value', 'valid_from', 'valid_till', 'status', 'id']
 
 
 class OrderDetailsSerializer(serializers.ModelSerializer):
@@ -137,6 +164,27 @@ class OrdersSerializer(serializers.ModelSerializer):
             return data
         return ""
 
+
+def get_table_status(table_number):
+
+    table_status = Orders.objects.select_related('table_number').filter(payment_status='Pending')
+    booked_tables = []
+    for i in table_status:
+        d = {
+            "numbr": i.table_number.id,
+
+        }
+        booked_tables.append(d["numbr"])
+
+    return booked_tables
+
+class CustomerPaymentsSerializer(serializers.ModelSerializer):
+
+    id = serializers.IntegerField(required=False)
+
+    class Meta:
+        model = CustomerPayments
+        fields = ['id', 'order', 'customer', 'bill', 'payment_id', 'payment_amount', 'payment_status', 'payment_method', 'status']
 
 def get_table_status(table_number):
 

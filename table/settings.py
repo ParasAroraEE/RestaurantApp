@@ -54,8 +54,17 @@ INSTALLED_APPS = [
 
     # drf
     'rest_framework',
-]
+    'rest_framework.authtoken',
 
+    # third party apps
+    'phonenumber_field',
+]
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+
+    ]
+}
 MIDDLEWARE = [
 
     'django.middleware.security.SecurityMiddleware',
@@ -73,7 +82,7 @@ ROOT_URLCONF = 'table.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [templates],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -85,7 +94,7 @@ TEMPLATES = [
         },
     },
 ]
-
+AUTH_USER_MODEL = 'restaurant.Account'
 WSGI_APPLICATION = 'table.wsgi.application'
 
 
@@ -196,3 +205,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "live-static", "media-root")
 import dj_database_url
 prod_db = dj_database_url.config(conn_max_age=500)
 DATABASES['default'].update(prod_db)
+
+STRIPE_SECRET_KEY = 'sk_test_'
+STRIPE_PUBLISHABLE_KEY = 'pk_test_'

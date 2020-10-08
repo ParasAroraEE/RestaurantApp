@@ -3,7 +3,7 @@ from django.contrib import admin
 
 from django.utils.safestring import mark_safe
 
-from restaurant.models import MenuCategories, MenuSubCategories, Items, Tables, Orders, OrderDetails, Coupon
+from restaurant.models import MenuCategories, MenuSubCategories, Items, Tables, Orders, OrderDetails, Coupon, CustomerPayments, Account
 from django.contrib.auth.models import User, Group
 
 
@@ -15,6 +15,18 @@ admin.empty_value_display = '**Empty**'
 
 
 admin.site.unregister(Group)
+
+
+class AccountAdmin(admin.ModelAdmin):
+    list_display = ('id', 'username', 'email', 'is_admin', 'is_active', 'is_staff', 'is_supperuser', 'password')
+    list_display_links = ("username",)
+    search_fields = ("username", "email")
+    list_filter = ("is_admin", "is_active", "is_staff", "is_supperuser")
+
+    icon_name = 'face'
+
+
+admin.site.register(Account, AccountAdmin)
 
 
 class MenuCategoriesAdmin(admin.ModelAdmin):
@@ -110,25 +122,25 @@ class OrderDetailsInline(admin.TabularInline):
 
 
 class OrdersAdmin(admin.ModelAdmin):
-    list_display = ('id', 'order_number', 'table_number', 'date', 'bill_amount', 'payment_status', 'order_status')
+    list_display = ('id', 'order_number', 'table_number', 'date', 'user', 'bill_amount', 'payment_status', 'order_status')
     list_display_links = ("order_number",)
-    search_fields = ("order_number", "id", "date", "payment_status", "order_status")
-    list_filter = ("order_number", "id", "date", "payment_status", "order_status")
-    fields = (('order_number', 'table_number', 'date'), ('bill_amount', 'discount_bill_amount'), ('coupon', 'discount'), ('payment_status', 'order_status'))
-    icon_name='assignment'
-    inlines=[OrderDetailsInline]
+    search_fields = ("order_number", "id", "date", "payment_status", "order_status", "user")
+    list_filter = ("order_number", "id", "date", "payment_status", "order_status", "user")
+    fields = (('order_number', 'date'), ('user', 'table_number'), ('bill_amount', 'discount_bill_amount'), ('coupon', 'discount'), ('payment_status', 'order_status'))
+    icon_name = 'assignment'
+    inlines = [OrderDetailsInline]
 
 
 admin.site.register(Orders, OrdersAdmin)
 
 
 class OrderDetailsAdmin(admin.ModelAdmin):
-    list_display=('id', 'order_number')
-    list_display_links=("id",)
-    search_fields=("order_number",)
-    list_filter=("order_number",)
-    fields=(('order_number',), ('item', 'food_qty', 'item_price'))
-    icon_name='add_shopping_cart'
+    list_display = ('id', 'order_number')
+    list_display_links = ("id",)
+    search_fields = ("order_number",)
+    list_filter = ("order_number",)
+    fields = (('order_number',), ('item', 'food_qty', 'item_price'))
+    icon_name = 'add_shopping_cart'
     # inlines = [OrderDetailsInline]
 
     # fieldsets = [
@@ -141,12 +153,24 @@ admin.site.register(OrderDetails, OrderDetailsAdmin)
 
 
 class CouponDetailsAdmin(admin.ModelAdmin):
-    list_display=('code', 'discount_type', 'discount_value', 'valid_from', 'valid_till', 'status')
-    list_display_links=("code",)
-    search_fields=("order_number", "discount_value")
-    list_filter=("status", "discount_type")
-    fields=(('code',), ('discount_type', 'discount_value'), ('valid_from', 'valid_till', 'status'), 'description')
-    icon_name='payment'
+    list_display = ('code', 'discount_type', 'discount_value', 'valid_from', 'valid_till', 'status')
+    list_display_links = ("code",)
+    search_fields = ("order_number", "discount_value")
+    list_filter = ("status", "discount_type")
+    fields = (('code',), ('discount_type', 'discount_value'), ('valid_from', 'valid_till', 'status'), 'description')
+    icon_name = 'exposure'
 
 
 admin.site.register(Coupon, CouponDetailsAdmin)
+
+
+class CustomerPaymentsAdmin(admin.ModelAdmin):
+    list_display = ('id', 'order', 'customer', 'bill', 'payment_id', 'payment_amount', 'payment_status', 'payment_method', 'status')
+    list_display_links = ("id",)
+    search_fields = ("customer", "order")
+    list_filter = ("customer", "payment_status", "status")
+    fields = (('order', 'customer'), 'bill', ('payment_id', 'payment_amount', 'payment_status', 'payment_method'), 'status')
+    icon_name = 'payment'
+
+
+admin.site.register(CustomerPayments, CustomerPaymentsAdmin)
