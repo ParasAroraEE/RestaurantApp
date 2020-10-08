@@ -6,6 +6,10 @@ from django.conf import settings
 from django.http.response import JsonResponse  # new
 from django.views.decorators.csrf import csrf_exempt  # new
 
+
+# python imports
+import stripe
+
 # app models import
 from restaurant.models import MenuCategories, MenuSubCategories, Items, Tables, Orders, OrderDetails, Coupon, CustomerPayments
 
