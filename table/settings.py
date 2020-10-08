@@ -29,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'z#z)!orijd&rhs+1%b(^j%ztxthm*js!71)%7v$n7dub)s_8jf'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = True
+DEBUG = True
 
 ALLOWED_HOSTS = ['restrontablebook.herokuapp.com']
 
