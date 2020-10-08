@@ -94,7 +94,7 @@ TEMPLATES = [
         },
     },
 ]
-# AUTH_USER_MODEL = 'restaurant.Account'
+AUTH_USER_MODEL = 'restaurant.Account'
 WSGI_APPLICATION = 'table.wsgi.application'
 
 
